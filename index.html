@@ -26,8 +26,17 @@ var list=[];
 var cur=0;
 var gal=0;
 $(function() {
-    $.getJSON('viral/0', function(viral) {
-        list=viral.data;
+    var urls = [];
+    for (var i = 0; i < 5; ++i) {
+        urls.push($.ajax('viral/' + i));
+    }
+    $.when.apply(this, urls).done(function() {
+        var virals = Array.prototype.slice.call(arguments);
+        for (var i = 0; i < virals.length; ++i) {
+            Array.prototype.push.apply(list, virals[i][0].data);
+        }
+
+
         var lastid = window.location.hash.substring(1);
         for (var i = 0; i < list.length; ++i) {
             if (list[i].id == lastid) {
