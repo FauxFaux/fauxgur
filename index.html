@@ -92,7 +92,7 @@ function part(item, idx) {
     var space = Math.min($(window).width()/item.width, $(window).height()/item.height);
     var zoom = space > 5 ? 4 : (space > 2.5 ? 2 : 1);
 
-    if (item.webm) {
+    if (item.webm || item.mp4) {
         var vid = $('<video/>', {
                 autoplay: 'autoplay',
                 loop: 'loop',
@@ -102,14 +102,18 @@ function part(item, idx) {
                 })
             .css('zoom', zoom)
             .appendTo('#b');
-        $('<source/>', {
-            src: item.webm.replace('http:', 'https:'),
-            type: 'video/webm',
-        }).appendTo(vid);
-        $('<source/>', {
-            src: item.mp4.replace('http:', 'https:'),
-            type: 'video/mp4',
-        }).appendTo(vid);
+        if (item.webm) {
+            $('<source/>', {
+                src: item.webm.replace('http:', 'https:'),
+                type: 'video/webm',
+            }).appendTo(vid);
+        }
+        if (item.mp4) {
+            $('<source/>', {
+                src: item.mp4.replace('http:', 'https:'),
+                type: 'video/mp4',
+            }).appendTo(vid);
+        }
     } else {
         img(item.link, 'gal' + (idx+1))
             .css('zoom', zoom)
