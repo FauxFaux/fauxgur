@@ -145,9 +145,12 @@ function go(i) {
     if (!item.is_album) {
         part(item, 0);
     } else {
-        for (var j=0; j<Math.min(item.images.length, max); ++j) {
-            part(item.images[j], j);
-        }
+        $.getJSON('album/' + item.id, function(album) {
+            var images = album.data.images;
+            for (var j=0; j<Math.min(images.length, max); ++j) {
+                part(images[j], j);
+            }
+        });
     }
 
     history.pushState({}, item.title, '#' + item.id);
