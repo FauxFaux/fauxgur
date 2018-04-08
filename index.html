@@ -155,12 +155,25 @@ function go(i) {
 
     history.pushState({}, item.title, '#' + item.id);
 
+    function attempt_preload(item) {
+        // TODO: totally yolo on the video preloading
+        var link = item.mp4 || item.webm || item.link;
+        $('<img/>', { src: link.replace('http:', 'https:') });
+    }
+
     window.setTimeout(function() {
         var next = list[i+1];
-        if (next && !next.is_album) {
-            $('<img/>', { src: list[i+1].link.replace('http:', 'https:') });
+        if (next) {
+            if (next.is_album) {
+                // loads up to the first five images in an album
+                for (var imi = 0; imi < Math.min(next.images.length, 5); ++imi) {
+                    attempt_preload(next.images[imi]);
+               }
+            } else {
+                attempt_preload(next);
+            }
         }
-    }, 0);
+    }, 100);
 }
 </script>
 </head>
