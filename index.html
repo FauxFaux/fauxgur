@@ -96,6 +96,7 @@ function part(item, idx) {
         var vid = $('<video/>', {
                 autoplay: 'autoplay',
                 loop: 'loop',
+                muted: 'muted',
                 width: item.width,
                 height: item.height,
                 id: 'gal' + (idx+1)
@@ -145,12 +146,19 @@ function go(i) {
     if (!item.is_album) {
         part(item, 0);
     } else {
-        $.getJSON('album/' + item.id, function(album) {
-            var images = album.data.images;
-            for (var j=0; j<Math.min(images.length, max); ++j) {
-                part(images[j], j);
-            }
-        });
+        var initial = item.images.length;
+        for (var j = 0; j<initial; ++j) {
+            part(item.images[j], j);
+        }
+
+        if (item.images_count > initial) {
+            $.getJSON('album/' + item.id, function(album) {
+                var images = album.data.images;
+                for (var j=initial; j<Math.min(images.length, max); ++j) {
+                    part(images[j], j);
+                }
+            });
+        }
     }
 
     history.pushState({}, item.title, '#' + item.id);
@@ -165,8 +173,11 @@ function go(i) {
         var next = list[i+1];
         if (next) {
             if (next.is_album) {
-                // loads up to the first five images in an album
-                for (var imi = 0; imi < Math.min(next.images.length, 5); ++imi) {
+                if (item.images_count > item.images.length) {
+                    $.getJSON('album/' + next.id, function() {});
+                }
+                // loads the imgur approved pre-load list (3 images at time of writing)
+                for (var imi = 0; imi < next.images.length; ++imi) {
                     attempt_preload(next.images[imi]);
                }
             } else {
