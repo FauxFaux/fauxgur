@@ -20,12 +20,19 @@ p {
     white-space: pre-wrap;
     font-size: 150%
 }
+p.msg {
+    width: 100%;
+    text-align: center;
+    font-size: 300%;
+    padding: 1em;
+}
 </style>
 <script>
 var list=[];
 var cur=0;
 var gal=0;
 $(function() {
+    $('#b p.msg').html("Loading gallery...");
     var urls = [];
     for (var i = 0; i < 5; ++i) {
         urls.push($.ajax('viral/' + i));
@@ -191,7 +198,9 @@ function go(i) {
 <body>
 <div class="container-fluid">
 <div class="col-md-12">
-<div id="b"/>
+<div id="b">
+    <p class="msg">Loading scripts from CDN...</p>
+</div>
 </div>
 </div>
 </body>
