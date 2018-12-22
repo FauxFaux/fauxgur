@@ -64,13 +64,13 @@
         integrity="sha256-89OKxKSNdqFaIJbiI2FxHA770JbBoovI4BPBGmuD4ks="
         crossorigin="anonymous"></script>
 <script>
-  var list = [];
-  var cur = 0;
-  var gal = 0;
-  var browsing = undefined;
+  const list = [];
+  let cur = 0;
+  let gal = 0;
+  let browsing = undefined;
   $(function () {
-    var args = window.location.hash.split('#');
-    var lastid;
+    const args = window.location.hash.split('#');
+    let lastid;
     if (3 === args.length) {
       if ('viral' === args[1]) {
         browsing = 'viral';
@@ -87,9 +87,10 @@
     if (browsing) {
       load_gallery(browsing, lastid);
     } else {
-      var status = $('#b p.msg');
-      status.html("⇦ for chaos, ⇨ for order<p>Then, ⇦/⇨ prev/next page. ⇧/⇩ prev/next image in gallery.</p>");
+      $('#b p.msg')
+        .html("⇦ for chaos, ⇨ for order<p>Then, ⇦/⇨ prev/next page. ⇧/⇩ prev/next image in gallery.</p>");
     }
+
     function goLeft() {
       if (!browsing) {
         browsing = 'rising';
@@ -143,19 +144,19 @@
   });
 
   function load_gallery(gal, lastid) {
-    var status = $('#b p.msg');
+    const status = $('#b p.msg');
     status.html("Loading gallery...");
-    var urls = [];
-    for (var i = 0; i < 5; ++i) {
+    const urls = [];
+    for (let i = 0; i < 5; ++i) {
       urls.push($.ajax(gal + '/' + i));
     }
     $.when.apply(this, urls).done(function () {
-      var virals = Array.prototype.slice.call(arguments);
-      for (var i = 0; i < virals.length; ++i) {
+      const virals = Array.prototype.slice.call(arguments);
+      for (let i = 0; i < virals.length; ++i) {
         Array.prototype.push.apply(list, virals[i][0].data);
       }
 
-      for (var i = 0; i < list.length; ++i) {
+      for (let i = 0; i < list.length; ++i) {
         if (list[i].id === lastid) {
           cur = i;
           break;
@@ -163,36 +164,35 @@
       }
       go(cur);
     }).fail(function () {
-      status.html("Something went wrong, it's probably over capacity. Please refresh.");
+      status.text("Something went wrong, it's probably over capacity. Please refresh.");
     });
   }
 
-
   function img(link, id) {
-    var href = link.replace('http:', 'https:');
-    var a = $('<a/>', {
-      href: href
-    });
-    $('<img/>', {
-      src: link.replace('http:', 'https:'),
-      id: id
-    }).appendTo(a);
+    const a = $('<a/>', {
+      href: link.replace('http:', 'https:')
+    }).append(
+      $('<img>', {
+        src: link.replace('http:', 'https:'),
+        id: id
+      }));
     return a;
   }
 
   function part(item, idx) {
-    var space = Math.min($(window).width() / item.width, $(window).height() / item.height);
-    var zoom = space > 5 ? 4 : (space > 2.5 ? 2 : 1);
+    const space = Math.min($(window).width() / item.width, $(window).height() / item.height);
+    const zoom = space > 5 ? 4 : (space > 2.5 ? 2 : 1);
 
+    const id = 'gal' + (idx + 1);
     if (item.webm || item.mp4) {
-      var vid = $('<video/>', {
+      const vid = $('<video/>', {
         autoplay: 'autoplay',
         loop: 'loop',
         muted: 'muted',
         volume: 0,
         width: item.width,
         height: item.height,
-        id: 'gal' + (idx + 1)
+        id: id
       })
         .css('zoom', zoom)
         .appendTo('#b');
@@ -209,7 +209,7 @@
         }).appendTo(vid);
       }
     } else {
-      img(item.link, 'gal' + (idx + 1))
+      img(item.link, id)
         .css('zoom', zoom)
         .appendTo('#b');
 
@@ -221,13 +221,13 @@
     $('<hr/>', {}).appendTo('#b');
   }
 
-  var max = 30;
+  const max = 30;
 
   function go(i) {
     gal = 0;
-    var item = list[i];
+    const item = list[i];
     $('#b').empty();
-    var h1 = $('<h1/>').text(item.title).appendTo('#b');
+    const h1 = $('<h1/>').text(item.title).appendTo('#b');
     $('<a/>', {
       href:
         item.is_album
@@ -241,8 +241,8 @@
     if (!item.is_album) {
       part(item, 0);
     } else {
-      var initial = item.images.length;
-      for (var j = 0; j < initial; ++j) {
+      const initial = item.images.length;
+      for (let j = 0; j < initial; ++j) {
         part(item.images[j], j);
       }
 
@@ -260,12 +260,12 @@
 
     function attempt_preload(item) {
       // TODO: totally yolo on the video preloading
-      var link = item.mp4 || item.webm || item.link;
+      const link = item.mp4 || item.webm || item.link;
       $('<img/>', {src: link.replace('http:', 'https:')});
     }
 
     window.setTimeout(function () {
-      var next = list[i + 1];
+      const next = list[i + 1];
       if (next) {
         if (next.is_album) {
           if (item.images && item.images_count > item.images.length) {
@@ -273,7 +273,7 @@
             });
           }
           // loads the imgur approved pre-load list (3 images at time of writing)
-          for (var imi = 0; imi < next.images.length; ++imi) {
+          for (let imi = 0; imi < next.images.length; ++imi) {
             attempt_preload(next.images[imi]);
           }
         } else {
