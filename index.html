@@ -60,6 +60,9 @@
 <script src="https://code.jquery.com/jquery-3.3.1.min.js"
         integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
         crossorigin="anonymous"></script>
+<script src="jquery.touchSwipe.min.js"
+        integrity="sha256-89OKxKSNdqFaIJbiI2FxHA770JbBoovI4BPBGmuD4ks="
+        crossorigin="anonymous"></script>
 <script>
   var list = [];
   var cur = 0;
@@ -87,30 +90,38 @@
       var status = $('#b p.msg');
       status.html("⇦ for chaos, ⇨ for order<p>Then, ⇦/⇨ prev/next page. ⇧/⇩ prev/next image in gallery.</p>");
     }
+    function goLeft() {
+      if (!browsing) {
+        browsing = 'rising';
+        load_gallery(browsing, undefined);
+        return;
+      }
+      if (cur > 0) {
+        cur--;
+      }
+      go(cur);
+    }
+
+    function goRight() {
+      if (!browsing) {
+        browsing = 'viral';
+        load_gallery(browsing, undefined);
+        return;
+      }
+      cur++;
+      if (cur >= list.length) {
+        cur = 0;
+      }
+      go(cur);
+    }
+
     $(document).keydown(function (ev) {
       switch (ev.keyCode) {
-        case 37: //left
-          if (!browsing) {
-            browsing = 'rising';
-            load_gallery(browsing, undefined);
-            return false;
-          }
-          if (cur > 0) {
-            cur--;
-          }
-          go(cur);
+        case 37: // left
+          goLeft();
           return false;
-        case 39: //right
-          if (!browsing) {
-            browsing = 'viral';
-            load_gallery(browsing, undefined);
-            return false;
-          }
-          cur++;
-          if (cur >= list.length) {
-            cur = 0;
-          }
-          go(cur);
+        case 39: // right
+          goRight();
           return false;
         case 40: //down
           gal++;
@@ -124,6 +135,10 @@
           $('#gal' + gal).get(0).scrollIntoView();
           return false;
       }
+    });
+    $(document).swipe({
+      swipeLeft: goLeft,
+      swipeRight: goRight,
     });
   });
 
