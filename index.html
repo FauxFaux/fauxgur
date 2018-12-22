@@ -38,8 +38,8 @@
         p.msg {
             width: 100%;
             text-align: center;
-            font-size: 10em;
-            padding: 1em;
+            font-size: 10vw;
+            padding: 1vw;
         }
 
         p.msg p {
@@ -64,7 +64,7 @@
         integrity="sha256-89OKxKSNdqFaIJbiI2FxHA770JbBoovI4BPBGmuD4ks="
         crossorigin="anonymous"></script>
 <script>
-  const list = [];
+  let list = undefined;
   let cur = 0;
   let gal = 0;
   let browsing = undefined;
@@ -85,7 +85,16 @@
     }
 
     if (browsing) {
-      load_gallery(browsing, lastid);
+      load_gallery(browsing, function () {
+        cur = list.map(function (item) {
+          return item.id;
+        }).indexOf(lastid);
+        if (-1 === cur) {
+          alert("invalid last id");
+          cur = 0;
+        }
+        go();
+      });
     } else {
       $('#b p.msg')
         .html("⇦ for chaos, ⇨ for order<p>Then, ⇦/⇨ prev/next page. ⇧/⇩ prev/next image in gallery.</p>");
@@ -94,7 +103,7 @@
     function goLeft() {
       if (!browsing) {
         browsing = 'rising';
-        load_gallery(browsing, undefined);
+        load_gallery(browsing, go);
         return;
       }
       if (cur > 0) {
@@ -106,7 +115,7 @@
     function goRight() {
       if (!browsing) {
         browsing = 'viral';
-        load_gallery(browsing, undefined);
+        load_gallery(browsing, go);
         return;
       }
       cur++;
@@ -143,40 +152,34 @@
     });
   });
 
-  function load_gallery(gal, lastid) {
+  function load_gallery(gal, cb) {
     const status = $('#b p.msg');
-    status.html("Loading gallery...");
-    const urls = [];
-    for (let i = 0; i < 5; ++i) {
-      urls.push($.ajax(gal + '/' + i));
-    }
-    $.when.apply(this, urls).done(function () {
-      const virals = Array.prototype.slice.call(arguments);
-      for (let i = 0; i < virals.length; ++i) {
-        Array.prototype.push.apply(list, virals[i][0].data);
-      }
-
-      for (let i = 0; i < list.length; ++i) {
-        if (list[i].id === lastid) {
-          cur = i;
-          break;
+    status.text("Loading gallery...");
+    $.getJSON(gal + ".json")
+      .done(function (data) {
+        list = data;
+        if (cb) {
+          cb();
         }
-      }
-      go(cur);
-    }).fail(function () {
-      status.text("Something went wrong, it's probably over capacity. Please refresh.");
-    });
+      })
+      .fail(function (xhr, textStatus, error) {
+        status.text("Gallery loading failed, refresh to retry: " + textStatus + " // " + error);
+      });
   }
 
   function img(link, id) {
-    const a = $('<a/>', {
-      href: link.replace('http:', 'https:')
+    $('<a/>', {
+      href: link
     }).append(
       $('<img>', {
-        src: link.replace('http:', 'https:'),
+        src: link,
         id: id
-      }));
-    return a;
+      }))
+      .appendTo('#b');
+  }
+
+  function simpleLink(item) {
+    return 'https://i.imgur.com/' + item.id + "." + item.format;
   }
 
   function part(item, idx) {
@@ -184,38 +187,26 @@
     const zoom = space > 5 ? 4 : (space > 2.5 ? 2 : 1);
 
     const id = 'gal' + (idx + 1);
-    if (item.webm || item.mp4) {
-      const vid = $('<video/>', {
+    const link = simpleLink(item);
+    if ("mp4" === item.format) {
+      $('<video/>', {
         autoplay: 'autoplay',
         loop: 'loop',
-        muted: 'muted',
+        muted: true,
         volume: 0,
         width: item.width,
         height: item.height,
-        id: id
+        id: id,
+        src: link,
       })
         .css('zoom', zoom)
         .appendTo('#b');
-      if (item.webm) {
-        $('<source/>', {
-          src: item.webm.replace('http:', 'https:'),
-          type: 'video/webm'
-        }).appendTo(vid);
-      }
-      if (item.mp4) {
-        $('<source/>', {
-          src: item.mp4.replace('http:', 'https:'),
-          type: 'video/mp4'
-        }).appendTo(vid);
-      }
     } else {
-      img(item.link, id)
-        .css('zoom', zoom)
-        .appendTo('#b');
-
+      img(link, id);
     }
-    if (item.description) {
-      $('<p/>').text(item.description).appendTo('#b');
+
+    if (item.desc) {
+      $('<p/>').text(item.desc).appendTo('#b');
     }
 
     $('<hr/>', {}).appendTo('#b');
@@ -223,61 +214,42 @@
 
   const max = 30;
 
-  function go(i) {
+  function go() {
     gal = 0;
-    const item = list[i];
+    const item = list[cur];
     $('#b').empty();
     const h1 = $('<h1/>').text(item.title).appendTo('#b');
     $('<a/>', {
-      href:
-        item.is_album
-          ? item.link.replace('http:', 'https:')
-          : 'https://imgur.com/' + item.id
+      // TODO: it might not be a gallery?
+      href: 'https://imgur.com/gallery/' + item.id
     }).text(item.id
-      + (item.images_count > 2 ? ' (' + item.images_count + ')' : ''))
+      + (item.images.length > 2 ? ' (' + item.images.length + ')' : ''))
       .appendTo(h1);
     $('<a/>', {href: '/'}).text('/').appendTo(h1);
 
-    if (!item.is_album) {
-      part(item, 0);
-    } else {
-      const initial = item.images.length;
-      for (let j = 0; j < initial; ++j) {
-        part(item.images[j], j);
-      }
-
-      if (item.images_count > initial) {
-        $.getJSON('album/' + item.id, function (album) {
-          var images = album.data.images;
-          for (var j = initial; j < Math.min(images.length, max); ++j) {
-            part(images[j], j);
-          }
-        });
-      }
+    for (let j = 0; j < Math.min(item.images.length, max); ++j) {
+      part(item.images[j], j);
     }
 
     history.pushState({}, item.title, '#' + browsing + '#' + item.id);
 
-    function attempt_preload(item) {
-      // TODO: totally yolo on the video preloading
-      const link = item.mp4 || item.webm || item.link;
-      $('<img/>', {src: link.replace('http:', 'https:')});
-    }
-
     window.setTimeout(function () {
-      const next = list[i + 1];
-      if (next) {
-        if (next.is_album) {
-          if (item.images && item.images_count > item.images.length) {
-            $.getJSON('album/' + next.id, function () {
-            });
-          }
-          // loads the imgur approved pre-load list (3 images at time of writing)
-          for (let imi = 0; imi < next.images.length; ++imi) {
-            attempt_preload(next.images[imi]);
-          }
+      const next = list[cur + 1];
+      if (!next) {
+        return;
+      }
+      for (let imi = 0; imi < Math.min(next.images.length, 3); ++imi) {
+        const item = next.images[imi];
+        const link = simpleLink(item);
+        if ("mp4" !== item.format) {
+          $('<img/>', {src: link});
         } else {
-          attempt_preload(next);
+          $('<video/>', {
+            preload: "auto",
+            muted: true,
+            volume: 0,
+            src: link
+          });
         }
       }
     }, 100);
